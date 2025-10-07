@@ -6,13 +6,14 @@ import os
 import uuid
 from typing import List
 from datetime import datetime
+import pytz
 import numpy as np
 from services.file_handler import FileHandler
 from services.data_analyzer import DataAnalyzer
 from services.ai_service import AIService
 from models.schemas import AnalysisResponse, CleaningRequest, CleaningResponse
 from models.database import get_db, FileRecord, init_db
-from utils.cleaning_operations import CleaningOperations
+from utils.cleaning_operations import CleaningOperations,replace_nan,convert_numpy_types
 
 # Initialize database
 init_db()
@@ -26,6 +27,9 @@ cleaning_ops = CleaningOperations()
 
 # Store analysis results temporarily (in-memory cache)
 analysis_store = {}
+
+ist = pytz.timezone('Asia/Kolkata')
+
 
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -179,7 +183,7 @@ async def clean_data(file_id: str, request: dict, db: Session = Depends(get_db))
         db_record = db.query(FileRecord).filter(FileRecord.file_id == file_id).first()
         if db_record:
             db_record.cleaned_filename = cleaned_filename
-            db_record.cleaned_date = datetime.utcnow()
+            db_record.cleaned_date = datetime.now(ist)
             db_record.rows_removed = changes.get('rows_removed', 0)
             db_record.values_fixed = changes.get('values_fixed', 0)
             db_record.columns_renamed = changes.get('columns_renamed', 0)
@@ -188,8 +192,9 @@ async def clean_data(file_id: str, request: dict, db: Session = Depends(get_db))
         
         # Get preview of cleaned data
         preview = file_handler.get_preview(cleaned_df, rows=20)
-        
-        return {
+        preview = replace_nan(preview)
+
+        response_data = convert_numpy_types({
             "file_id": file_id,
             "preview": preview,
             "changes": changes,
@@ -199,10 +204,14 @@ async def clean_data(file_id: str, request: dict, db: Session = Depends(get_db))
                 "cleaned_rows": int(len(cleaned_df)),
                 "rows_removed": int(len(df) - len(cleaned_df))
             }
-        }
+        })
+        
+        return response_data
     
     except Exception as e:
         # Log error to database
+        # import traceback
+        # traceback.print_exc()
         db_record = db.query(FileRecord).filter(FileRecord.file_id == file_id).first()
         if db_record:
             db_record.error_message = str(e)

@@ -2,6 +2,7 @@ import pandas as pd
 import re
 from typing import List, Dict, Tuple
 from datetime import datetime
+import numpy as np
 
 class CleaningOperations:
     def apply_cleaning(self, df: pd.DataFrame, issues: List[Dict], selected_issue_ids: List[int]) -> Tuple[pd.DataFrame, Dict]:
@@ -128,3 +129,26 @@ class CleaningOperations:
         df = df.dropna(thresh=threshold)
         removed_count = original_count - len(df)
         return df, removed_count
+    
+def replace_nan(obj):
+    import math
+    if isinstance(obj, float) and math.isnan(obj):
+        return None
+    elif isinstance(obj, dict):
+        return {k: replace_nan(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [replace_nan(item) for item in obj]
+    return obj
+
+def convert_numpy_types(obj):
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_numpy_types(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    return obj
