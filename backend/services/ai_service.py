@@ -52,18 +52,70 @@ class AIService:
         return "\n".join(context_parts)
     
     async def get_lm_studio_suggestions(self, context: str) -> Dict:
-        """Get suggestions from LM Studio"""
-        prompt = f"""You are a data cleaning expert. Analyze the following dataset and provide suggestions for cleaning operations.
+        """Get enhanced data cleaning and automation suggestions from LM Studio"""
 
-{context}
+        prompt = f"""
+    You are an expert data scientist specializing in automated data cleaning and preprocessing.
+    Your task is to analyze the dataset or data description provided below and recommend intelligent cleaning operations.
 
-Provide specific recommendations for:
-1. Column name improvements
-2. Data format standardization
-3. Handling missing values
-4. Data validation rules
+    ### PROJECT CONTEXT
+    You are contributing to the "AI Data Cleaning & Automation Tool" — an intelligent assistant that detects, cleans, and standardizes unstructured or inconsistent datasets (CSV, Excel, JSON, etc.).
 
-Keep responses concise and actionable."""
+    ### INPUT DATA CONTEXT
+    {context}
+
+    ---
+
+    ### COMMON DATA QUALITY ISSUES TO CONSIDER
+
+    🧹 **1. Missing or Null Values**
+    - Empty cells in key columns (e.g., no email, no price, missing date)
+    - NaN, NULL, or placeholder values like "-", "?", or "N/A"
+
+    📋 **2. Duplicate Records**
+    - Identical rows repeated more than once
+    - Same entity ID appearing multiple times with the same data
+
+    ✍️ **3. Inconsistent Formatting**
+    - Mixed date formats (e.g., 01/02/2025, 2025-02-01, Feb 1 25)
+    - Text casing inconsistencies (e.g., John Doe, john doe, JOHN DOE)
+    - Number formatting differences (e.g., 1,000 vs 1000 vs 1.000)
+
+    🧠 **4. Outliers or Invalid Values**
+    - Negative or unrealistic values (e.g., age = 999)
+    - Invalid category values not in the defined list
+
+    🧪 **5. Data Type Mismatches**
+    - Numbers or dates stored as text (e.g., "123" or "2025-01-01" as string)
+
+    🌐 **6. Inconsistent Categories / Labels**
+    - Variations like "USA", "U.S.A.", "United States"
+    - Misspellings in category names (e.g., "Electornics" → "Electronics")
+
+    ⏱ **7. Structural Issues**
+    - Extra blank rows or columns
+    - Column headers misplaced or merged cells breaking parsing
+
+    ---
+
+    ### OBJECTIVE
+    Analyze the dataset for the above issues and provide structured, automation-ready recommendations.
+
+    ### REQUIRED OUTPUT FORMAT
+    Respond in a structured JSON-like format with the following fields:
+
+    1. **column_name_recommendations** – Suggested renaming or normalization of headers.
+    2. **format_standardization** – Conversions for consistent data types, formats, and encodings.
+    3. **missing_value_strategy** – Handling strategies (imputation, drop, inference, etc.) with short reasoning.
+    4. **data_validation_rules** – Logical or range-based rules ensuring data integrity.
+    5. **automation_opportunities** – Potential cleaning tasks suitable for automation (e.g., deduplication, normalization).
+
+    ### STYLE & RESPONSE GUIDELINES
+    - Keep recommendations concise, actionable, and technically implementable.
+    - Suggest both **manual fixes** and **automated approaches**.
+    - Use JSON-like formatting for easy parsing.
+    - Avoid generic advice; be specific to the provided context.
+    """
 
         try:
             response = requests.post(
@@ -72,15 +124,15 @@ Keep responses concise and actionable."""
                 json={
                     "model": "local-model",
                     "messages": [
-                        {"role": "system", "content": "You are a data cleaning expert."},
+                        {"role": "system", "content": "You are a senior data cleaning and automation expert."},
                         {"role": "user", "content": prompt}
                     ],
-                    "temperature": 0.7,
-                    "max_tokens": 500
+                    "temperature": 0.5,
+                    "max_tokens": 900
                 },
                 timeout=60
             )
-            
+
             if response.status_code == 200:
                 result = response.json()
                 suggestion_text = result['choices'][0]['message']['content']
@@ -92,6 +144,7 @@ Keep responses concise and actionable."""
         except Exception as e:
             print(f"LM Studio connection error: {e}")
             return {}
+
     
     async def get_openai_suggestions(self, context: str) -> Dict:
         """Get suggestions from OpenAI (placeholder for future implementation)"""
