@@ -13,7 +13,7 @@ const CleanedDataView = ({ cleanedData, fileId, resetTool, setLoading, setLoadin
       if (!response.ok) throw new Error(`Failed to download ${format}`);
 
       const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `cleaned_data.${format.toLowerCase()}`;
+      let filename = `${fileId}_cleaned_data.${format.toLowerCase()}`;
       if (contentDisposition) {
         const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
         if (matches?.[1]) filename = matches[1].replace(/['"]/g, '');
@@ -42,16 +42,8 @@ const CleanedDataView = ({ cleanedData, fileId, resetTool, setLoading, setLoadin
         <h2 className="text-3xl font-bold text-gray-800 mb-3 flex items-center gap-2">
           ✨ Data Cleaned Successfully!
         </h2>
-        
-        {cleanedData?.cleaned_filename && (
-          <div className="mb-4">
-            <span className="text-gray-600">Saved as: </span>
-            <span className="font-mono bg-green-100 text-green-800 px-3 py-1 rounded-lg">
-              {cleanedData.cleaned_filename}
-            </span>
-          </div>
-        )}
-        
+        <p className="text-gray-600 text-sm mb-4">Your data has been processed and is ready for review and download.</p>
+
         <div className="flex flex-wrap gap-4 mb-3">
           <div className="bg-green-50 px-4 py-2 rounded-lg">
             <span className="text-green-700 font-semibold">✓ {cleanedData?.changes?.rows_removed ?? 0}</span>
@@ -66,58 +58,78 @@ const CleanedDataView = ({ cleanedData, fileId, resetTool, setLoading, setLoadin
             <span className="text-purple-600 text-sm ml-1">columns renamed</span>
           </div>
         </div>
-        
-        <div className="text-sm text-gray-500">
-          Final dataset: {cleanedData?.stats?.cleaned_rows ?? 0} rows × {cleanedData?.preview?.columns?.length ?? 0} columns
-        </div>
-      </div>
 
-      <DataTable 
-        columns={cleanedData?.preview?.columns} 
-        rows={cleanedData?.preview?.rows} 
-        className="mb-6 rounded-lg overflow-hidden border border-gray-200"
-      />
-
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-700 mb-3">Download Cleaned Data:</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <button
-            onClick={() => downloadFile('csv')}
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">Download Cleaned Data</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <button
+              onClick={() => downloadFile('csv')}
             className="flex items-center justify-center space-x-2 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors shadow-md"
-          >
-            <FileSpreadsheet className="w-5 h-5" />
-            <span>CSV</span>
-          </button>
-          <button
-            onClick={() => downloadFile('xlsx')}
+            >
+              <FileSpreadsheet className="w-5 h-5" />
+              <span>CSV</span>
+            </button>
+            <button
+              onClick={() => downloadFile('xlsx')}
             className="flex items-center justify-center space-x-2 bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 transition-colors shadow-md"
-          >
-            <FileSpreadsheet className="w-5 h-5" />
-            <span>Excel</span>
-          </button>
-          <button
-            onClick={() => downloadFile('json')}
+            >
+              <FileSpreadsheet className="w-5 h-5" />
+              <span>Excel</span>
+            </button>
+            <button
+              onClick={() => downloadFile('json')}
             className="flex items-center justify-center space-x-2 bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors shadow-md"
-          >
-            <FileJson className="w-5 h-5" />
-            <span>JSON</span>
-          </button>
-          <button
-            onClick={() => downloadFile('sql')}
+            >
+              <FileJson className="w-5 h-5" />
+              <span>JSON</span>
+            </button>
+            <button
+              onClick={() => downloadFile('sql')}
             className="flex items-center justify-center space-x-2 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors shadow-md"
+            >
+              <Database className="w-5 h-5" />
+              <span>SQL</span>
+            </button>
+          </div>
+
+          <button
+            onClick={resetTool}
+        className="w-full mt-4 bg-yellow-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-yellow-200 transition-colors"
           >
-            <Database className="w-5 h-5" />
-            <span>SQL</span>
+        Clean Another File
           </button>
         </div>
-      </div>
 
-      <button
-        onClick={resetTool}
-        className="w-full mt-4 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
-      >
-        Clean Another File
-      </button>
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">Cleaned Data Preview</h3>
+          <div className="text-sm text-gray-600 mb-2">
+            Dataset Size: {cleanedData?.stats?.cleaned_rows ?? 0} rows × {cleanedData?.preview?.columns?.length ?? 0} columns
+          </div>
+          {(() => {
+            const raw = cleanedData?.preview;
+            let cols = [];
+            let rows = [];
+            if (!raw) {
+              cols = [];
+              rows = [];
+            } else if (raw.columns && raw.rows) {
+              cols = raw.columns;
+              rows = raw.rows;
+            } else if (Array.isArray(raw)) {
+              cols = raw.length > 0 ? Object.keys(raw[0]) : [];
+              rows = raw.map(r => cols.map(c => (r[c] !== undefined ? r[c] : '')));
+            }
+
+            return (
+              <DataTable
+                columns={cols}
+                rows={rows}
+                className="bg-white rounded-lg border border-gray-200"
+              />
+            );
+          })()}
+        </div>
+      </div>
     </div>
   );
 };

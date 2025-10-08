@@ -48,10 +48,40 @@ const UploadTab = ({
 
       const uploadData = await uploadResponse.json();
       setFileId(uploadData.file_id);
-      setPreview(uploadData.preview);
 
-      setLoadingMessage('AI is analyzing your data...');
-      const analysisResponse = await fetch(`${API_BASE_URL}/analyze/${uploadData.file_id}`, {
+      // Normalize preview from backend (which returns list of record objects)
+      const rawPreview = uploadData.preview;
+      let columns = [];
+      if (uploadData.stats?.columns && uploadData.stats.columns.length > 0) {
+        columns = uploadData.stats.columns;
+      } else if (Array.isArray(rawPreview) && rawPreview.length > 0) {
+        columns = Object.keys(rawPreview[0]);
+      }
+
+      const rows = Array.isArray(rawPreview)
+        ? rawPreview.map(r => columns.map(c => (r[c] !== undefined ? r[c] : '')))
+        : [];
+
+      setPreview({ columns, rows });
+
+      // let the user explicitly start processing (analyze) the uploaded file
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  // explicit analyze / submit for processing action
+  const submitForProcessing = async () => {
+    if (!fileId) return setError('No uploaded file to process');
+
+    setLoading(true);
+    setLoadingMessage('AI is analyzing your data...');
+    setError(null);
+
+    try {
+      const analysisResponse = await fetch(`${API_BASE_URL}/analyze/${fileId}`, {
         method: 'POST',
       });
 
@@ -132,10 +162,11 @@ const UploadTab = ({
 
   return (
     <>
-      {preview && (
+      {preview && !analysis && (
         <DataPreview 
           preview={preview} 
-          analysis={analysis} 
+          analysis={analysis}
+          onProcess={submitForProcessing}
         />
       )}
 
