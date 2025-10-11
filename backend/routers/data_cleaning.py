@@ -10,7 +10,6 @@ import pytz
 import numpy as np
 from services.file_handler import FileHandler
 from services.data_analyzer import DataAnalyzer
-from services.ai_service import AIService
 from models.schemas import AnalysisResponse, CleaningRequest, CleaningResponse
 from models.database import get_db, FileRecord, init_db
 from utils.cleaning_operations import CleaningOperations,replace_nan,convert_numpy_types
@@ -22,7 +21,6 @@ router = APIRouter()
 
 file_handler = FileHandler()
 data_analyzer = DataAnalyzer()
-ai_service = AIService()
 cleaning_ops = CleaningOperations()
 
 # Store analysis results temporarily (in-memory cache)
@@ -103,13 +101,7 @@ async def analyze_data(file_id: str, db: Session = Depends(get_db)):
         df = analysis_store[file_id]['dataframe']
         
         # Perform analysis
-        issues = data_analyzer.analyze(df)
-        
-        # Get AI suggestions for complex issues
-        ai_suggestions = await ai_service.get_suggestions(df, issues)
-        
-        # Merge AI suggestions with rule-based analysis
-        enhanced_issues = data_analyzer.enhance_with_ai(issues, ai_suggestions)
+        enhanced_issues = data_analyzer.analyze(df)
         
         # Store analysis results
         analysis_store[file_id]['issues'] = enhanced_issues
@@ -210,14 +202,15 @@ async def clean_data(file_id: str, request: dict, db: Session = Depends(get_db))
     
     except Exception as e:
         # Log error to database
-        # import traceback
-        # traceback.print_exc()
+        import traceback
+        traceback.print_exc()
         db_record = db.query(FileRecord).filter(FileRecord.file_id == file_id).first()
         if db_record:
             db_record.error_message = str(e)
             db_record.status = "error"
             db.commit()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/download/{file_id}/{format}")
 async def download_cleaned_data(file_id: str, format: str):

@@ -49,11 +49,6 @@ const IssueCard = ({ issue, isSelected, onToggle }) => {
               </div>
             )}
             
-            {issue.ai_suggestion && (
-              <div className="mt-2 text-sm text-purple-700 bg-purple-50 p-2 rounded-lg">
-                🤖 AI: {issue.ai_suggestion}
-              </div>
-            )}
           </div>
         </div>
         <label className="flex items-center cursor-pointer ml-4 flex-shrink-0">

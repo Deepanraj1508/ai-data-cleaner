@@ -18,7 +18,6 @@ class Issue(BaseModel):
     examples: Optional[List[str]] = None
     column: Optional[str] = None
     columns: Optional[List[str]] = None
-    auto_fix: bool = False
 
 class AnalysisResponse(BaseModel):
     file_id: str
