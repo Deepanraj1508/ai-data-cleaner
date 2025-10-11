@@ -11,8 +11,8 @@ from services.file_handler import FileHandler
 load_dotenv()
 
 app = FastAPI(
-    title="AI Data Cleaning Tool",
-    description="Automated data cleaning with AI-powered suggestions",
+    title="Data Cleaning Tool",
+    description="Automated data cleaning with intelligent suggestions",
     version="1.0.0"
 )
 
@@ -35,7 +35,7 @@ app.include_router(data_cleaning.router, prefix="/api/v1", tags=["data-cleaning"
 @app.get("/")
 async def root():
     return {
-        "message": "AI Data Cleaning Tool API",
+        "message": "Data Cleaning Tool API",
         "version": "1.0.0",
         "docs": "/docs"
     }

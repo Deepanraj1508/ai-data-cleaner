@@ -32,9 +32,9 @@ const DataCleaningTool = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
-            🧠 AI Data Cleaning Tool
+            📊 Data Cleaning Tool
           </h1>
-          <p className="text-gray-600 text-lg">Transform messy data into pristine datasets with AI-powered cleaning</p>
+          <p className="text-gray-600 text-lg">Transform messy data into pristine datasets with intelligent cleaning</p>
         </div>
 
         {/* Tab Navigation */}
